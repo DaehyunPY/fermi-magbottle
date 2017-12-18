@@ -5,6 +5,7 @@ from h5py import File
 from numpy import average, histogram, arange
 from dask.bag import from_sequence
 from dask.diagnostics import ProgressBar
+from dask.multiprocessing import get as multiprocessing_get
 import matplotlib.pyplot as plt
 
 
@@ -17,9 +18,8 @@ def spectra(filename):
         yield from f['digitizer/channel3'][where, ...].astype('int64')
 
 
-#globbed = glob('/Volumes/store/20144078'
-#               '/Test/Run_132/rawdata/*.h5')  # change run number!
-globbed = glob('/Users/daehyun/Desktop/*.h5')  # change run number!
+globbed = glob('/Volumes/store/20144078'
+               '/Test/Run_073/rawdata/*.h5')  # change run number!
 with ProgressBar():
     tof = from_sequence(globbed).map(spectra).flatten().mean().compute()
 
@@ -34,11 +34,11 @@ plt.show()
 def process(filename):
     with File(filename, 'r') as f:
         offset = 4000
-        bins = [5895, 5930, 5975, 6035, 6075]  # double check bins!
+        bins = [5895, 5930, 5975, 6040, 6100, 6170, 6285, 6335, 6375]  # double check bins!
         to = bins[-1]
         bp = f['Background_Period'].value
         phase = round(
-            float(f['photon_source/FEL01/PhaseShifter5/DeltaPhase'].value), 2
+            float(f['photon_source/FEL01/PhaseShifter2/DeltaPhase'].value), 2
         )
         bunches = f['bunches'][...]
         where = bunches%bp != 0
@@ -67,19 +67,29 @@ with ProgressBar():
             .map(process)
             .flatten()
             .to_dataframe()
-            .compute()
+            .compute(get=multiprocessing_get)
     )
 
 
 # %%
-plt.figure()
 keys = sorted([k for k in df.keys() if k.startswith('peak')])
 n = len(keys)
-cov = df.groupby('phase')[keys].cov()
+groupped = df.dropna().groupby('phase')[keys]
+counts = groupped.count()
+cov = groupped.cov()
+
+plt.figure(figsize=(20, 20))
 for i in range(n):
     for j in range(n):
         if i > j:
             continue
         plt.subplot(n, n, n*n-n*(j+1)+(i+1))
-        plt.plot(cov[keys[i]].loc[:, keys[j]])
+        plt.plot(cov[keys[i]].loc[:, keys[j]], '.-')
+        plt.twinx()
+        plt.plot(counts[keys[i]], 'k.-', alpha=0.2)
+        plt.title('p{0} vs p{1}'.format(i, j))
+plt.tight_layout()
+plt.subplot(224)
+plt.plot(tof)
+plt.xlim(5500, 7500)
 plt.show()

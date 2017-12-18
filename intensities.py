@@ -10,6 +10,7 @@ from h5py import File
 from numpy import average
 from dask.bag import from_sequence
 from dask.diagnostics import ProgressBar
+from dask.multiprocessing import get as multiprocessing_get
 import matplotlib.pyplot as plt
 
 
@@ -33,14 +34,14 @@ def process(filename):
 
 
 # %%
-globbed = glob('/Volumes/store/20144078/Test/Run_127/rawdata/*.h5')
+globbed = glob('/Volumes/store/20144078/Test/Run_225/rawdata/*.h5')
 with ProgressBar():
     df = (
         from_sequence(globbed)
             .map(process)
             .flatten()
             .to_dataframe()
-            .compute()
+            .compute(get=multiprocessing_get)
             .set_index('bunch')
     )
 
@@ -49,4 +50,6 @@ plt.figure()
 # plt.plot(df.index, df['iom'], ',')
 # plt.hist(df['iom'], bins=100)
 plt.plot(df['iom'], df['tof'], ',')
+plt.xlabel('IOM (pC)')
+plt.ylabel('TOF (arb units)')
 plt.show()
