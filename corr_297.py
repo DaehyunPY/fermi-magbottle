@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Spyder Editor
+
+This is a temporary script file.
+"""
 from glob import glob
 
 from h5py import File
@@ -9,7 +15,8 @@ import matplotlib.pyplot as plt
 
 
 # %%
-offset, fr, to = 4000, 5500, 6500
+offset = 4000
+fr, to = 5500, 6500
 run = 297
 
 
@@ -18,34 +25,32 @@ def spectra(filename):
         bp = f['Background_Period'].value
         bunches = f['bunches'][...]
         where = bunches % bp != 0
-        yield from f['digitizer/channel3'][where, 0:to].astype('float64')
+        yield from f['digitizer/channel3'][where, 0:to].astype('int64')
 
 
 globbed = glob(
     # '/Volumes/store/20144078'
     '/home/ldm/ExperimentalData/Online4LDM/20144078'
-    '/Test/Run_{:3d}/rawdata/*.h5'.format(run))
-
+    '/Test/Run_{:3d}/rawdata/*.h5'.format(run))  # change run number!
 with File(globbed[0]) as f:
     bp = f['Background_Period'].value
-
 with ProgressBar():
     tof = from_sequence(globbed).map(spectra).flatten().mean().compute()
 
 # %%
-bins = [
-    [5830, 5845],
-    [5860, 5880],
-    [5893, 5913],
-    [5933, 5952],
-    [5975, 5998],
-    [6029, 6083],
-    [6094, 6119]
-]
+bins = (
+    slice(5830, 5845),
+    slice(5860, 5880),
+    slice(5893, 5913),
+    slice(5933, 5952),
+    slice(5975, 5998),
+    slice(6029, 6083),
+    slice(6094, 6119)
+)
 plt.figure()
 plt.plot(tof)
 for b in bins:
-    plt.axvspan(*b, 0, 1000, alpha=0.5)
+    plt.axvspan(b.start, b.stop, 0, 1000, alpha=0.5)
 plt.xlim(fr, to)
 plt.minorticks_on()
 plt.grid(which='both')
@@ -75,7 +80,7 @@ def process(filename):
                 .astype('float64')
         )
         tofs = f['digitizer/channel3'][:, 0:to].astype('int64')
-        arrs = average(tofs[:, 0:offset], 1)[:,  None] - tofs
+        arrs = average(tofs[:, 0:offset], 1)[:, None] - tofs
         fmt = 'peak{}'.format
         for bunch, hor, ver, inten, arr in zip(
             bunches, hors, vers, intensities, arrs
@@ -85,9 +90,8 @@ def process(filename):
                 'hor': hor,
                 'ver': ver,
                 'intensity': inten,
-                **{fmt(i): arr[b0:b1].sum() for i, (b0, b1) in enumerate(bins)}
+                **{fmt(i): arr[b].sum() for i, b in enumerate(bins)}
             }
-
 
 # %%
 with ProgressBar():
@@ -99,6 +103,7 @@ with ProgressBar():
             .compute(get=multiprocessing_get)
             .set_index('bunch')
     )
+
 
 # %%
 keys = sorted([k for k in df.keys() if k.startswith('peak')])
@@ -119,6 +124,8 @@ good = (
     (slim[0] < sums) & (sums < slim[1])
 )
 
+
+
 # %%
 corr = df[good][keys].corr()
 
@@ -130,6 +137,9 @@ for i in range(n):
         plt.subplot(n, n, n * n - n * (j + 1) + (i + 1))
         plt.hist2d(df[good][keys[i]], df[good][keys[j]],
                    bins=(100, 100), cmap='Greys')
+        # plt.axis('equal')
+        # plt.gca().set_xticklabels([])
+        # plt.gca().set_yticklabels([])
         plt.title('p{0} vs p{1} corr={2:1.2f}'.format(
             i, j, corr[keys[i]][keys[j]])
         )
@@ -162,9 +172,9 @@ plt.grid()
 
 plt.subplot(4, 4, 16)
 plt.plot(tof)
-for i, (b0, b1) in enumerate(bins):
-    plt.axvspan(b0, b1, 0, 1000, alpha=0.5)
-    plt.text((b0 + b1) / 2, tof[b0:b1].min(), 'p{}'.format(i),
+for i, b in enumerate(bins):
+    plt.axvspan(b.start, b.stop, 0, 1000, alpha=0.5)
+    plt.text((b.start + b.stop) / 2, tof[b].min(), 'p{}'.format(i),
              horizontalalignment='center')
 plt.xlim(fr, to)
 plt.title('run={}'.format(run))

@@ -11,22 +11,19 @@ import matplotlib.pyplot as plt
 
 
 # %%
-offset, fr, to = 4000, 5500, 6500
-path = ('/home/ldm/ExperimentalData/Online4LDM/20144078'
+offset, fr, to = 4000, 5750, 6500
+path = ('/home/antoine/online4ldm_local/20144078'
         '/Test/Run_{:03d}/rawdata/*.h5').format
-runs = [425]  # 425
+runs = {452}  # range(420, 426), 428
 globbed = sorted(concat(glob(path(r)) for r in runs))
 
 
 def spectra(filename):
-    try:
-        with File(filename, 'r') as f:
-            bp = f['Background_Period'][...]
-            bunches = f['bunches'][...]
-            where = bunches % bp != 0
-            yield from f['digitizer/channel3'][where, 0:to].astype('float64')
-    except:
-        raise IOError('{}'.format(filename))
+    with File(filename, 'r') as f:
+        bp = f['Background_Period'][...]
+        bunches = f['bunches'][...]
+        where = bunches % bp != 0
+        yield from f['digitizer/channel1'][where, 0:to].astype('float64')
 
 
 with File(globbed[0]) as f:
@@ -37,22 +34,17 @@ with ProgressBar():
 
 # %%
 bins = [
+    [5825, 5845],
+    [5858, 5880],
     [5890, 5913],
+    [5930, 5950],
+    [5973, 5995],
     [6025, 6050],
-    [6256, 6293]
+    [6090, 6115],
+    [6161, 6186],
+    [6256, 6293],
+    [6390, 6418]
 ]
-#bins = [
-#    [5825, 5845],
-#    [5858, 5880],
-#    [5890, 5913],
-#    [5930, 5950],
-#    [5973, 5995],
-#    [6025, 6050],
-#    [6090, 6115],
-#    [6161, 6186],
-#    [6256, 6293],
-#    [6390, 6418]
-#]
 plt.figure()
 plt.plot(tof)
 for b in bins:
@@ -67,13 +59,13 @@ def process(filename):
     with File(filename, 'r') as f:
         bunches = f['bunches'][...]
         phase = round(
-            float(f['photon_source/FEL01/PhaseShifter4/DeltaPhase'].value), 2
+            float(f['photon_source/FEL01/PhaseShifter2/DeltaPhase'].value), 2
         )
         intensities = (
             f['photon_diagnostics/FEL01/I0_monitor/iom_sh_a_pc'][...]
                 .astype('float64')
         )
-        tofs = f['digitizer/channel3'][:, 0:to].astype('float64')
+        tofs = f['digitizer/channel1'][:, 0:to].astype('float64')
         arrs = average(tofs[:, 0:offset], 1)[:,  None] - tofs
         fmt = 'peak{}'.format
         for bunch, inten, arr in zip(bunches, intensities, arrs):
