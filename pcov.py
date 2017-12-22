@@ -41,7 +41,7 @@ def process(filename):
 # %%
 run = 452
 globbed = glob('/home/antoine/online4ldm_local/20144078'
-               '/Test/Run_{:03d}/rawdata/*.h5'.format(run))
+               '/Test/Run_{:03d}/rawdata/*.h5'.format(run))[:10]
 arr = concatenate([from_delayed(process(g), [shapes(g), to-fr+1], 'float64')
                    for g in globbed])
 with ProgressBar():

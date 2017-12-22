@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Spyder Editor
+
+This is a temporary script file.
+"""
 from glob import glob
 
 from h5py import File
@@ -9,8 +15,9 @@ import matplotlib.pyplot as plt
 
 
 # %%
-offset, fr, to = 4000, 5500, 6500
-run = 297
+offset = 4000
+fr, to = 5500, 6500
+run = 493
 
 
 def spectra(filename):
@@ -18,17 +25,15 @@ def spectra(filename):
         bp = f['Background_Period'].value
         bunches = f['bunches'][...]
         where = bunches % bp != 0
-        yield from f['digitizer/channel3'][where, 0:to].astype('float64')
+        yield from f['digitizer/channel1'][where, 0:to].astype('float64')
 
 
 globbed = glob(
     # '/Volumes/store/20144078'
-    '/home/ldm/ExperimentalData/Online4LDM/20144078'
-    '/Test/Run_{:3d}/rawdata/*.h5'.format(run))
-
+    '/home/antoine/online4ldm_local/20144078'
+    '/Test/Run_{:3d}/rawdata/*.h5'.format(run))  # change run number!
 with File(globbed[0]) as f:
     bp = f['Background_Period'].value
-
 with ProgressBar():
     tof = from_sequence(globbed).map(spectra).flatten().mean().compute()
 
@@ -37,10 +42,13 @@ bins = [
     [5830, 5845],
     [5860, 5880],
     [5893, 5913],
-    [5933, 5952],
+    [5928, 5952],
     [5975, 5998],
-    [6029, 6083],
-    [6094, 6119]
+    [6018, 6074],
+    [6082, 6112],
+    [6157, 6213],
+    [6247, 6336],
+    [6375, 6450]
 ]
 plt.figure()
 plt.plot(tof)
@@ -50,9 +58,53 @@ plt.xlim(fr, to)
 plt.minorticks_on()
 plt.grid(which='both')
 plt.show()
+#%%
 
-
-# %%
+with File('/home/antoine/online4ldm_local/20144078/Test/Run_495/work/Run_495_peak_limits.h5', 'r') as f:
+        noflines = f['boxes'][(...)].shape
+        number_of_peaks=noflines[0]-2    
+        TOF1 = f['boxes'][(0)]
+        offset = f['boxes'][(1)]
+        BASE_A, BASE_B=offset[0], offset[1]
+        TOF1_A, TOF1_B = TOF1[0], TOF1[1]
+            
+        if number_of_peaks==11:
+            SBP_1_2_A , SBP_1_2_B = f['boxes'][(2)][0],f['boxes'][(2)][1]
+            SBP_1_1_A , SBP_1_1_B = f['boxes'][(3)][0],f['boxes'][(3)][1]
+            MB_1_A,       MB_1_B  = f['boxes'][(4)][0],f['boxes'][(4)][1]#peaks_limits[2][0]-TOF1_A,peaks_limits[2][1]-TOF1_A
+            SBM_1_1_A , SBM_1_1_B = f['boxes'][(5)][0],f['boxes'][(5)][1]#peaks_limits[3][0]-TOF1_A,peaks_limits[3][1]-TOF1_A
+            SBM_1_2_A , SBM_1_2_B = f['boxes'][(6)][0],f['boxes'][(6)][1]#peaks_limits[4][0]-TOF1_A,peaks_limits[4][1]-TOF1_A
+            MB_2_A,       MB_2_B  = f['boxes'][(7)][0],f['boxes'][(7)][1]
+            SBM_2_1_A , SBM_2_1_B = f['boxes'][(8)][0],f['boxes'][(8)][1]
+            SBM_2_2_A , SBM_2_2_B = f['boxes'][(9)][0],f['boxes'][(9)][1]
+            MB_3_A,       MB_3_B  = f['boxes'][(10)][0],f['boxes'][(10)][1]
+            SBM_3_1_A , SBM_3_1_B = f['boxes'][(11)][0],f['boxes'][(11)][1]
+            SBM_3_2_A , SBM_3_2_B = f['boxes'][(12)][0],f['boxes'][(12)][1]
+#
+print(number_of_peaks)            
+#bins = [
+#           [SBP_1_2_A , SBP_1_2_B]
+#            [SBP_1_1_A , SBP_1_1_B]
+#            [MB_1_A,       MB_1_B]
+#            [SBM_1_1_A , SBM_1_1_B]
+#           [ SBM_1_2_A , SBM_1_2_B]
+#            [MB_2_A,       MB_2_B] 
+#           [ SBM_2_1_A , SBM_2_1_B]
+#            [SBM_2_2_A , SBM_2_2_B] 
+#            [MB_3_A,       MB_3_B]  
+#            [SBM_3_1_A , SBM_3_1_B] 
+#            [SBM_3_2_A , SBM_3_2_B] 
+##
+#]
+#plt.figure()
+#plt.plot(tof)
+#for b in bins:
+#    plt.axvspan(*b, 0, 1000, alpha=0.5)
+#plt.xlim(fr, to)
+#plt.minorticks_on()
+#plt.grid(which='both')
+#plt.show()
+#%%
 def process(filename):
     with File(filename, 'r') as f:
         bunches = f['bunches'][...]
@@ -74,7 +126,7 @@ def process(filename):
             f['photon_diagnostics/FEL01/I0_monitor/iom_sh_a_pc'][...]
                 .astype('float64')
         )
-        tofs = f['digitizer/channel3'][:, 0:to].astype('int64')
+        tofs = f['digitizer/channel1'][:, 0:to].astype('int64')
         arrs = average(tofs[:, 0:offset], 1)[:,  None] - tofs
         fmt = 'peak{}'.format
         for bunch, hor, ver, inten, arr in zip(
@@ -88,7 +140,6 @@ def process(filename):
                 **{fmt(i): arr[b0:b1].sum() for i, (b0, b1) in enumerate(bins)}
             }
 
-
 # %%
 with ProgressBar():
     df = (
@@ -99,6 +150,7 @@ with ProgressBar():
             .compute(get=multiprocessing_get)
             .set_index('bunch')
     )
+
 
 # %%
 keys = sorted([k for k in df.keys() if k.startswith('peak')])
@@ -119,14 +171,16 @@ good = (
     (slim[0] < sums) & (sums < slim[1])
 )
 
+
+
 # %%
+
 corr = df[good][keys].corr()
 
 plt.figure(figsize=(15, 15))
 for i in range(n):
     for j in range(n):
-        if i >= j:
-            continue
+        continue
         plt.subplot(n, n, n * n - n * (j + 1) + (i + 1))
         plt.hist2d(df[good][keys[i]], df[good][keys[j]],
                    bins=(100, 100), cmap='Greys')
@@ -162,7 +216,7 @@ plt.grid()
 
 plt.subplot(4, 4, 16)
 plt.plot(tof)
-for i, (b0, b1) in enumerate(bins):
+for (b0,b1) in enumerate(bins):
     plt.axvspan(b0, b1, 0, 1000, alpha=0.5)
     plt.text((b0 + b1) / 2, tof[b0:b1].min(), 'p{}'.format(i),
              horizontalalignment='center')
