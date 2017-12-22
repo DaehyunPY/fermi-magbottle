@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 
 # %%
 offset, fr, to = 4000, 5700, 7000
-path = ('/home/ldm/ExperimentalData/Online4LDM/20144078'
+path = ('/home/antoine/online4ldm_local/20144078'
         '/Test/Run_{:03d}/rawdata/*.h5').format
-runs = {519}
+runs = {610}
 globbed = sorted(concat(glob(path(r)) for r in runs))
 
 with File(globbed[0]) as f:
@@ -73,6 +73,9 @@ with File(globbed[0]) as f:
 #]
 
 bins = [  # 515
+    [5752, 5760],
+    [5772, 5782],
+    [5800, 5812],
     [5825, 5845],
     [5853, 5880],
     [5890, 5918],
@@ -151,7 +154,7 @@ for ix, kx in enumerate(keys):
         plt.plot(pcov, '.-')
         plt.ticklabel_format(style='sci', scilimits=[1, 1],
                              useOffset=False, axis='y')
-        # plt.gca().set_yticks([0])
+        plt.gca().set_yticks([0])
         plt.twinx()
         plt.plot(counts[kx], 'k.-', alpha=0.1)
         plt.gca().set_yticks([])

@@ -27,15 +27,15 @@ def process(filename):
     with File(filename, 'r') as f:
         bp = f['Background_Period'][...]
         bunches = f['bunches'][...]
-        tofs = f['digitizer/channel3'][:, 0:to].astype('float64')
+        tofs = f['digitizer/channel1'][:, 0:to].astype('float64')
         arrs = (average(tofs[:, 0:offset], 1)[:, None] - tofs)[:, fr:]
         where = bunches % bp != 0
     return arrs[where, :]
 
 
 # %%
-run = 365
-globbed = glob('/home/ldm/ExperimentalData/Online4LDM/20144078'
+run = 582
+globbed = glob('/home/antoine/online4ldm_local/20144078'
                '/Test/Run_{:03d}/rawdata/*.h5'.format(run))
 arr = concatenate([from_delayed(process(g), [shapes(g), to-fr], 'float64')
                    for g in globbed])

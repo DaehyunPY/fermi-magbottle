@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 # %%
 offset = 4000
 fr, to = 5500, 6500
-run = 493
+run = 602
 
 
 def spectra(filename):
@@ -58,53 +58,8 @@ plt.xlim(fr, to)
 plt.minorticks_on()
 plt.grid(which='both')
 plt.show()
-#%%
 
-with File('/home/antoine/online4ldm_local/20144078/Test/Run_495/work/Run_495_peak_limits.h5', 'r') as f:
-        noflines = f['boxes'][(...)].shape
-        number_of_peaks=noflines[0]-2    
-        TOF1 = f['boxes'][(0)]
-        offset = f['boxes'][(1)]
-        BASE_A, BASE_B=offset[0], offset[1]
-        TOF1_A, TOF1_B = TOF1[0], TOF1[1]
-            
-        if number_of_peaks==11:
-            SBP_1_2_A , SBP_1_2_B = f['boxes'][(2)][0],f['boxes'][(2)][1]
-            SBP_1_1_A , SBP_1_1_B = f['boxes'][(3)][0],f['boxes'][(3)][1]
-            MB_1_A,       MB_1_B  = f['boxes'][(4)][0],f['boxes'][(4)][1]#peaks_limits[2][0]-TOF1_A,peaks_limits[2][1]-TOF1_A
-            SBM_1_1_A , SBM_1_1_B = f['boxes'][(5)][0],f['boxes'][(5)][1]#peaks_limits[3][0]-TOF1_A,peaks_limits[3][1]-TOF1_A
-            SBM_1_2_A , SBM_1_2_B = f['boxes'][(6)][0],f['boxes'][(6)][1]#peaks_limits[4][0]-TOF1_A,peaks_limits[4][1]-TOF1_A
-            MB_2_A,       MB_2_B  = f['boxes'][(7)][0],f['boxes'][(7)][1]
-            SBM_2_1_A , SBM_2_1_B = f['boxes'][(8)][0],f['boxes'][(8)][1]
-            SBM_2_2_A , SBM_2_2_B = f['boxes'][(9)][0],f['boxes'][(9)][1]
-            MB_3_A,       MB_3_B  = f['boxes'][(10)][0],f['boxes'][(10)][1]
-            SBM_3_1_A , SBM_3_1_B = f['boxes'][(11)][0],f['boxes'][(11)][1]
-            SBM_3_2_A , SBM_3_2_B = f['boxes'][(12)][0],f['boxes'][(12)][1]
-#
-print(number_of_peaks)            
-#bins = [
-#           [SBP_1_2_A , SBP_1_2_B]
-#            [SBP_1_1_A , SBP_1_1_B]
-#            [MB_1_A,       MB_1_B]
-#            [SBM_1_1_A , SBM_1_1_B]
-#           [ SBM_1_2_A , SBM_1_2_B]
-#            [MB_2_A,       MB_2_B] 
-#           [ SBM_2_1_A , SBM_2_1_B]
-#            [SBM_2_2_A , SBM_2_2_B] 
-#            [MB_3_A,       MB_3_B]  
-#            [SBM_3_1_A , SBM_3_1_B] 
-#            [SBM_3_2_A , SBM_3_2_B] 
-##
-#]
-#plt.figure()
-#plt.plot(tof)
-#for b in bins:
-#    plt.axvspan(*b, 0, 1000, alpha=0.5)
-#plt.xlim(fr, to)
-#plt.minorticks_on()
-#plt.grid(which='both')
-#plt.show()
-#%%
+#%
 def process(filename):
     with File(filename, 'r') as f:
         bunches = f['bunches'][...]
